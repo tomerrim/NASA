@@ -40,9 +40,13 @@ function loadPlanetsData() {
   });
 }
 
+function getAllPlanets(){
+  return habitablePlanets;
+}
+
 module.exports = {
   loadPlanetsData,
-  planets: habitablePlanets,
+  getAllPlanets,
 };
 
 //csv - comma saperated values
