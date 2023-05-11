@@ -1,9 +1,9 @@
 const launchesDataBase = require("./launches.mongo");
 const planets = require("./planets.mongo");
 
-const launches = new Map();
+const defaultFlightNumber = 100;
 
-let latestFlightNumber = 100;
+const launches = new Map();
 
 const launch = {
   flightNumber: 100,
@@ -28,6 +28,18 @@ async function getAllLaunches() {
   .find({},{"_id": 0, "__v": 0});
 }
 
+async function getLatestFlightNumber(){
+  const latestLaunch = await launchesDataBase
+  .findOne()
+  .sort('-flightNumber');
+
+  if(!latestLaunch){
+    return defaultFlightNumber;
+  }
+
+  return latestLaunch.flightNumber;
+}
+
 async function saveLaunch(launch){
   const planet = await planets.findOne({
     keplerName: launch.target,
@@ -44,14 +56,17 @@ async function saveLaunch(launch){
   });
 }
 
-function addNewLaunch(launch) {
-  latestFlightNumber++;
-  launches.set(latestFlightNumber, Object.assign(launch, {
-    success: true, 
+async function scheduleNewLaunch(launch){
+  const newFlightNumber = await getLatestFlightNumber() + 1;
+
+  const newLaunch = Object.assign(launch,{
+    success: true,
     upcoming: true,
     customers: ['ZTM','NASA'],
-    flightNumber: latestFlightNumber,
-  }));
+    flightNumber: newFlightNumber,
+  });
+
+  await saveLaunch(newLaunch);
 }
 
 function abortLaunchById(launchId){
@@ -64,6 +79,6 @@ function abortLaunchById(launchId){
 module.exports = {
   existsLaunchWithId,
   getAllLaunches,
-  addNewLaunch,
+  scheduleNewLaunch,
   abortLaunchById,
 };
